@@ -161,23 +161,23 @@ def censor_concept_terms(text, related_terms):
 
     redacted_sentences = []
     
-    print(f"Original text: {text}")
-    print(f"Sentences identified: {len(sentences)}\n")
+    # print(f"Original text: {text}")
+    # print(f"Sentences identified: {len(sentences)}\n")
     
     for i, sentence in enumerate(sentences):
-        print(f"Processing sentence {i + 1}: {sentence}")
+        #print(f"Processing sentence {i + 1}: {sentence}")
         
         # Check if any concept-related term is in the sentence (case-insensitive), allow trailing punctuation
         if any(re.search(rf'\b{re.escape(term)}[.,;!?]?\b', sentence, re.IGNORECASE) for term in related_terms):
             # Redact entire sentence if a term is found
             redacted_sentence = '█' * len(sentence)  # Full redaction of the sentence including spaces
             redacted_sentences.append(redacted_sentence)
-            print(f"Redacting sentence {i + 1}: {sentence}\n")
+            #print(f"Redacting sentence {i + 1}: {sentence}\n")
         else:
             redacted_sentences.append(sentence)  # Keep sentence unchanged if no concept is found
-            print(f"Keeping sentence {i + 1}: {sentence}\n")
+            #print(f"Keeping sentence {i + 1}: {sentence}\n")
 
     # Join the redacted sentences back into the full text
     redacted_text = ' '.join(redacted_sentences)
-    print(f"\nRedacted text finalized: {redacted_text}")
+    #print(f"\nRedacted text finalized: {redacted_text}")
     return redacted_text
