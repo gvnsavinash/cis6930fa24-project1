@@ -115,6 +115,9 @@ def main(args):
     if not os.path.exists(args.output):
         os.mkdir(args.output)
 
+    import nltk
+    nltk.download('wordnet')
+
     # Handle all text files in the folder
     for file in files:
         with open(file, "r", encoding="utf-8") as f:
