@@ -55,12 +55,16 @@ def redact(text, entities, redact_names=False, redact_dates=False, redact_phones
 
     if redact_names and 'PERSON' in entities:
         for name in entities['PERSON']:
-            redacted_text = redacted_text.replace(name, '█' * len(name))
+            # Handle tuples by joining non-empty parts, otherwise treat as a direct string
+            if isinstance(name, tuple):
+                name = ''.join(part for part in name if part)
+            if name:
+                redacted_text = redacted_text.replace(name, '█' * len(name))
 
     if redact_dates and 'DATE' in entities:
         for date in entities['DATE']:
+            # Handle tuples by joining non-empty parts
             if isinstance(date, tuple):
-                # Join the non-empty parts of the tuple
                 date = ''.join(part for part in date if part)
             if date:
                 redacted_text = redacted_text.replace(date, '█' * len(date))
