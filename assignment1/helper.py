@@ -2,7 +2,7 @@ import os
 import re
 
 def apply_redaction(text, entities, redact_names=False, redact_dates=False, redact_phones=False, redact_address=False, redact_topics=[]):
-    redacted_text = text
+    redacted_text = text  
     redact_settings = {
         "PERSON": redact_names,
         "DATE": redact_dates,
@@ -13,8 +13,11 @@ def apply_redaction(text, entities, redact_names=False, redact_dates=False, reda
     for entity_type, should_redact in redact_settings.items():
         if should_redact and entity_type in entities:
             for item in entities[entity_type]:
+                
                 if item:
-                    redacted_text = redacted_text.replace(item, '█' * len(item))
+                    
+                    pattern = r'\b' + re.escape(item) + r'\b'  
+                    redacted_text = re.sub(pattern, '█' * len(item), redacted_text, flags=re.IGNORECASE)
 
     if redact_topics:
         redacted_text = hide_terms_in_sentences(redacted_text, redact_topics)
@@ -34,15 +37,23 @@ def get_related_words(concept):
             synonyms.append(lemma.name().replace('_', ' '))
     return list(set(synonyms))
 
+
 def hide_terms_in_sentences(text, related_words):
-    pattern = r'\b(?:' + '|'.join(re.escape(word) for word in related_words) + r')\b'
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)
+    sentences = re.split(r'\. ', text)
     redacted_sentences = []
-
     for sentence in sentences:
-        if re.search(pattern, sentence, re.IGNORECASE):
+        should_redact = False
+        for word in related_words:
+            if word.lower() in sentence.lower():
+                should_redact = True
+                break  
+        if should_redact:   
             redacted_sentences.append('█' * len(sentence))
-        else:
-            redacted_sentences.append(sentence)
+        else:   
+            redacted_sentences.append(sentence + '.')
+    final_text = ' '.join(redacted_sentences).rstrip('.')
+    if text.endswith('.'):
+        final_text += '.'  
+    return final_text
 
-    return ' '.join(redacted_sentences)
+

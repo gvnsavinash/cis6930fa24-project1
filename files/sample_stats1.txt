@@ -1,8 +1,5 @@
 File: ran.txt
 Entity type : Number of occurrences
 
-PERSON : 7
-DATE : 9
-PHONE : 3
-ADDRESS : 9
+PHONE : 0
 

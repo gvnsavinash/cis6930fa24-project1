@@ -12,6 +12,8 @@ nltk = "*"
 usaddress = "*"
 pyap = "*"
 spacy = "*"
+us = "*"
+pycountry = "*"
 
 [dev-packages]
 

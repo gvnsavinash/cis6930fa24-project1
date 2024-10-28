@@ -4,19 +4,20 @@ import sys
 import warnings
 import pyap
 import spacy
-from assignment1.regex_helper import extract_using_regex
-from assignment1.utility_helpers import (
-    apply_redaction,
-    list_files,
-    get_related_words,
-    hide_terms_in_sentences,
-)
+from assignment1.pattern_matcher import *
+from assignment1.helper import *
+import us
+import pycountry
 
-nlp = spacy.load("en_core_web_sm")
+
+nlp = spacy.load("en_core_web_md")
 
 def find_addresses_with_pyap(text):
     found_addresses = pyap.parse(text, country='US')
-    return [address.full_address for address in found_addresses]
+    #print(f"i am in find_addresses_with_pyap Found addresses: {found_addresses}")
+    return [str(address) for address in found_addresses]
+
+
 
 def print_debug_info(stage, names=None, dates=None, phones=None, addresses=None):
     """Prints debug information for each stage of extraction."""
@@ -54,25 +55,52 @@ def redact_sensitive_info(text_input, args, topics=None):
 
     full_text = "\n".join(lines_in_text)
 
+    
+   
+
     # Step 1: Extract entities using regex
     regex_results = extract_using_regex(full_text)
-    found_names = regex_results.get("PERSON", [])
+    found_names = []
     found_dates = regex_results.get("DATE", [])
     found_phones = regex_results.get("PHONE", [])
     found_addresses = regex_results.get("ADDRESS", [])
 
+    found_emails = regex_results.get("EMAIL", [])
+
+    # Extract local parts of emails as names
+    email_names = [email.split('@')[0] for email in found_emails]
+    found_names.extend(email_names)
+
+    names_from_titles = extract_titles_and_names(full_text)
+    found_names.extend(names_from_titles)
+
     print_debug_info("Regex Extraction", names=found_names, dates=found_dates, phones=found_phones, addresses=found_addresses)
 
     # Step 2: Extract entities using SpaCy
+    state_abbrs = [state.abbr for state in us.states.STATES]   
+    state_names = [state.name for state in us.states.STATES] 
+    countries_names = [country.name for country in pycountry.countries]
+    countries_names_code = [country.alpha_2 for country in pycountry.countries]
+    #print(f"State abbreviations: {state_abbrs}")
+
     spacy_names, spacy_dates, spacy_addresses = [], [], []
     doc = nlp(full_text)
     for entity in doc.ents:
-        if entity.label_ == 'PERSON':
-            spacy_names.append(entity.text)
-        elif entity.label_ == 'DATE':
-            spacy_dates.append(entity.text)
-        elif entity.label_ == 'GPE':
+        #print(f"Entity: {entity.text}, Label: {entity.label_}")
+        if entity.label_ == 'GPE' :
             spacy_addresses.append(entity.text)
+        elif entity.label_ == 'PERSON':
+            spacy_names.append(entity.text)
+        # elif entity.label_ == 'DATE':
+        #     spacy_dates.append(entity.text)
+        
+    tokens = full_text.split()  # Split text into individual whitespace-separated tokens
+    for token in tokens:
+        token_normalized = token.strip('.,')  # Normalize tokens by removing punctuation like commas and periods
+        if token_normalized in state_abbrs and len(token_normalized) == 2:
+            spacy_addresses.append(token_normalized)
+        elif token_normalized in state_names or token_normalized in countries_names or token_normalized in countries_names_code or token_normalized == 'USA':
+            spacy_addresses.append(token_normalized)
 
     print_debug_info("SpaCy NER Extraction", names=spacy_names, dates=spacy_dates, addresses=spacy_addresses)
 
@@ -96,6 +124,7 @@ def redact_sensitive_info(text_input, args, topics=None):
         pyap_addresses = find_addresses_with_pyap(line)
         if pyap_addresses:
             for address in pyap_addresses:
+                #print(f"Found address: {address}")
                 line = line.replace(address, '█' * len(address))
 
         redacted_line = apply_redaction(
@@ -111,6 +140,22 @@ def redact_sensitive_info(text_input, args, topics=None):
 
     return "\n".join(redacted_text_lines), combined_names, combined_dates, combined_phones, combined_addresses
 
+
+
+def extract_titles_and_names(text):
+    title_name_pattern = re.compile(
+        r'\b(Dear|Mr\.|Mrs\.|Ms\.|Dr\.|Prof\.)\s+'  
+        r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)\s*'  
+        r'(Jr\.|Sr\.|III|IV)?\b',  
+        re.IGNORECASE
+    )
+    
+    title_name_matches = title_name_pattern.findall(text)
+    
+    names_from_titles = [' '.join(filter(None, match[1:])).strip() for match in title_name_matches]
+    return names_from_titles
+
+
 def main(args):
     warnings.filterwarnings("ignore")
     files_to_process = list_files(args.input)
@@ -120,6 +165,9 @@ def main(args):
 
     import nltk
     nltk.download('wordnet')
+
+    
+
 
     # Process each file and generate a unique stats file for each
     for i, file_path in enumerate(files_to_process, start=1):
