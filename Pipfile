@@ -4,14 +4,14 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-transformers = "*"
-torch = "*"
-commonregex = "*"
 pytest = "*"
 en_core_web_md = {file = "https://github.com/explosion/spacy-models/releases/download/en_core_web_md-3.8.0/en_core_web_md-3.8.0-py3-none-any.whl"}
 numpy = "*"
 pandas = "*"
 nltk = "*"
+usaddress = "*"
+pyap = "*"
+spacy = "*"
 
 [dev-packages]
 

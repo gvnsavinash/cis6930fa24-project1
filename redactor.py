@@ -2,170 +2,167 @@ import os
 import argparse
 import sys
 import warnings
-from assignment1.regex_helper import regex_match
+import pyap
+import spacy
+from assignment1.regex_helper import extract_using_regex
 from assignment1.utility_helpers import (
-    merge_overlapping_substrings,
-    redact,
-    get_files_in_folder,
-    find_concept_synonyms,
-    censor_concept_terms,
+    apply_redaction,
+    list_files,
+    get_related_words,
+    hide_terms_in_sentences,
 )
 
-def censor(text_input, ner_pipeline, concepts=None):
-    """
-    Censors sensitive information from a given text input using both regex and Hugging Face transformers.
+nlp = spacy.load("en_core_web_sm")
 
-    Args:
-        text_input (str): The text to be processed.
-        ner_pipeline: The Hugging Face NER pipeline.
-        concepts (list): List of concepts to redact, if provided.
+def find_addresses_with_pyap(text):
+    found_addresses = pyap.parse(text, country='US')
+    return [address.full_address for address in found_addresses]
 
-    Returns:
-        dict: A dictionary containing the combined entities extracted from both regex and NER.
-    """
-    # If text_input is a file, read it line by line to preserve structure
+def print_debug_info(stage, names=None, dates=None, phones=None, addresses=None):
+    """Prints debug information for each stage of extraction."""
+    print(f"\n--- {stage} ---")
+    if names is not None:
+        print(f"Persons: {names}")
+    if dates is not None:
+        print(f"Dates: {dates}")
+    if phones is not None:
+        print(f"Phones: {phones}")
+    if addresses is not None:
+        print(f"Addresses: {addresses}")
+
+def format_entity_stats(file, args, names, dates, phones, addresses):
+    stats_output = f"File: {file}\nEntity type : Number of occurrences\n\n"
+    
+    if args.names:
+        stats_output += f"PERSON : {len(names)}\n"
+    if args.dates:
+        stats_output += f"DATE : {len(dates)}\n"
+    if args.phones:
+        stats_output += f"PHONE : {len(phones)}\n"
+    if args.address:
+        stats_output += f"ADDRESS : {len(addresses)}\n"
+    
+    stats_output += "\n"
+    return stats_output
+
+def redact_sensitive_info(text_input, args, topics=None):
     if os.path.exists(text_input):
         with open(text_input, 'r', encoding='utf-8') as f:
-            content_lines = f.readlines()  # Keep the newline characters intact
+            lines_in_text = f.readlines()
     else:
-        content_lines = text_input.splitlines()  # Handle multi-line input text
+        lines_in_text = text_input.splitlines()
 
-    # Join lines to form the full content for regex/NER processing
-    content = "\n".join(content_lines)
+    full_text = "\n".join(lines_in_text)
 
-    # Step 1: Use Regex to extract entities
-    dict_regex_ent = regex_match(content)
-    print("\n--- Regex Extraction ---")
-    for key, value in dict_regex_ent.items():
-        print(f"Regex extracted {len(value)} {key} entities: {value}")
+    # Step 1: Extract entities using regex
+    regex_results = extract_using_regex(full_text)
+    found_names = regex_results.get("PERSON", [])
+    found_dates = regex_results.get("DATE", [])
+    found_phones = regex_results.get("PHONE", [])
+    found_addresses = regex_results.get("ADDRESS", [])
 
-    # Step 2: Use Hugging Face NER to extract additional entities
-    ner_results = ner_pipeline(content)
-    dict_hf_ent = {"PERSON": [], "DATE": [], "PHONE": [], "ADDRESS": [], "EMAIL": []}
+    print_debug_info("Regex Extraction", names=found_names, dates=found_dates, phones=found_phones, addresses=found_addresses)
 
-    for entity in ner_results:
-        if entity['entity_group'] == 'PER':
-            dict_hf_ent['PERSON'].append(entity['word'])
-        elif entity['entity_group'] == 'LOC':
-            dict_hf_ent['ADDRESS'].append(entity['word'])
-        elif entity['entity_group'] == 'DATE':
-            dict_hf_ent['DATE'].append(entity['word'])
+    # Step 2: Extract entities using SpaCy
+    spacy_names, spacy_dates, spacy_addresses = [], [], []
+    doc = nlp(full_text)
+    for entity in doc.ents:
+        if entity.label_ == 'PERSON':
+            spacy_names.append(entity.text)
+        elif entity.label_ == 'DATE':
+            spacy_dates.append(entity.text)
+        elif entity.label_ == 'GPE':
+            spacy_addresses.append(entity.text)
 
-    # Step 2.5: Filter out PERSON entities that don't start with a capital letter
-    dict_hf_ent['PERSON'] = [person for person in dict_hf_ent['PERSON'] if person[0].isupper()]
-    
-    print("\n--- Hugging Face NER Extraction ---")
-    for key, value in dict_hf_ent.items():
-        print(f"Transformers extracted {len(value)} {key} entities: {value}")
+    print_debug_info("SpaCy NER Extraction", names=spacy_names, dates=spacy_dates, addresses=spacy_addresses)
 
-    # Step 3: Combine regex and NER results (union of both)
-    for key in dict_regex_ent:
-        if key in dict_hf_ent:
-            dict_hf_ent[key].extend(dict_regex_ent[key])
+    # Step 3: Combine regex and SpaCy results, removing duplicates
+    combined_names = list(set(found_names + spacy_names))
+    combined_dates = list(set(found_dates + spacy_dates))
+    combined_phones = list(set(found_phones))
+    combined_addresses = list(set(found_addresses + spacy_addresses))
 
-    # Remove duplicates
-    for key in dict_hf_ent:
-        dict_hf_ent[key] = list(set(dict_hf_ent[key]))
+    print_debug_info("Combined Extraction (Regex + NER + pyap)", names=combined_names, dates=combined_dates, phones=combined_phones, addresses=combined_addresses)
 
-    # Step 4: Handle concept redaction (Redact entire sentences if concept terms are present)
-    if concepts:
-        for concept in concepts:
-            related_terms = find_concept_synonyms(concept)
-            print(f"Related terms for concepts [{concept}]: {related_terms}")
-            content = censor_concept_terms(content, related_terms)
+    # Redact terms based on topics if specified
+    if topics:
+        for topic in topics:
+            related_words = get_related_words(topic)
+            full_text = hide_terms_in_sentences(full_text, related_words)
 
-    # Log the combined result before redaction
-    print("\n--- Combined Extraction (Regex + NER) ---")
-    for key, value in dict_hf_ent.items():
-        print(f"Total combined {key} entities: {len(value)} - {value}")
+    # Step 4: Apply redaction
+    redacted_text_lines = []
+    for line in lines_in_text:
+        pyap_addresses = find_addresses_with_pyap(line)
+        if pyap_addresses:
+            for address in pyap_addresses:
+                line = line.replace(address, '█' * len(address))
 
-    # Step 5: Redact sensitive information
-    redacted_lines = []
-    for line in content_lines:
-        redacted_line = redact(
-            line, 
-            dict_hf_ent, 
-            redact_names=args.names, 
-            redact_dates=args.dates, 
-            redact_phones=args.phones, 
-            redact_address=args.address, 
-            redact_concepts=concepts
-        )  # Redact each line while preserving structure
-        redacted_lines.append(redacted_line)
+        redacted_line = apply_redaction(
+            line,
+            {"PERSON": combined_names, "DATE": combined_dates, "PHONE": combined_phones, "ADDRESS": combined_addresses},
+            redact_names=args.names,
+            redact_dates=args.dates,
+            redact_phones=args.phones,
+            redact_address=args.address,
+            redact_topics=topics,
+        )
+        redacted_text_lines.append(redacted_line)
 
-    return "\n".join(redacted_lines)  # Return the censored text with newlines intact
-
+    return "\n".join(redacted_text_lines), combined_names, combined_dates, combined_phones, combined_addresses
 
 def main(args):
-    """
-    Main function of the redactor script using Hugging Face transformers and regex matching for entity recognition.
+    warnings.filterwarnings("ignore")
+    files_to_process = list_files(args.input)
 
-    Args:
-        args: Command-line arguments.
-    """
-    warnings.filterwarnings("ignore", message="Some weights of the model checkpoint at dbmdz/bert-large-cased-finetuned-conll03-english were not used when initializing BertForTokenClassification: ['bert.pooler.dense.bias', 'bert.pooler.dense.weight'] - This IS expected.")
-    
-    # Load Hugging Face's NER pipeline with a model fine-tuned for NER tasks
-    from transformers import pipeline
-    ner_pipeline = pipeline("ner", model="dbmdz/bert-large-cased-finetuned-conll03-english", aggregation_strategy="simple")
-
-    files = get_files_in_folder(args.input)
-
-    # Create output directory if it doesn't exist
     if not os.path.exists(args.output):
         os.mkdir(args.output)
 
     import nltk
     nltk.download('wordnet')
 
-    # Handle all text files in the folder
-    for file in files:
-        with open(file, "r", encoding="utf-8") as f:
+    # Process each file and generate a unique stats file for each
+    for i, file_path in enumerate(files_to_process, start=1):
+        with open(file_path, "r", encoding="utf-8") as f:
             original_text = f.read()
 
-        dict_ent = censor(original_text, ner_pipeline, concepts=args.concept)
-        file_base = os.path.basename(file)
+        # Redact information and extract entity stats
+        redacted_content, names, dates, phones, addresses = redact_sensitive_info(original_text, args, topics=args.concept)
+        file_name = os.path.basename(file_path)
 
-        # Write the redacted file with proper formatting
-        with open(os.path.join(args.output, file_base + ".censored"), "w", encoding="utf-8") as f:
-            f.write(dict_ent)
+        # Save the redacted content to a uniquely named file in the output directory
+        with open(os.path.join(args.output, file_name + ".censored"), "w", encoding="utf-8") as f:
+            f.write(redacted_content)
 
-        print(f"File {file_base} processed and saved to {args.output}")
+        print(f"File '{file_name}' processed and saved to '{args.output}'")
 
-        # Print statistics (if required)
+        # Define a unique name for each stats file (e.g., sample_stats1.txt, sample_stats2.txt)
+        stats_file_path = os.path.join(args.output, f"sample_stats{i}.txt")
+        
+        # Format and save statistics to the uniquely named stats file
+        stats_output = format_entity_stats(file_name, args, names, dates, phones, addresses)
+        with open(stats_file_path, "w", encoding="utf-8") as stats_file:
+            stats_file.write(stats_output)
+
+        # Print statistics to stderr or stdout as specified
         if args.stats == "stderr":
-            sys.stderr.write(f"Stats for {file}:\n")
+            sys.stderr.write("Printing stats to stderr\n")
+            sys.stderr.write(stats_output)
         elif args.stats == "stdout":
-            sys.stdout.write(f"Stats for {file}:\n")
-        else:
-            with open(args.stats, "w", encoding="utf-8") as f:
-                f.write(f"Stats for {file}:\n")
-
+            sys.stdout.write("Printing stats to stdout\n")
+            sys.stdout.write(stats_output)
 
 if __name__ == "__main__":
-    import logging
-
-    # logging.basicConfig(
-    #     level=logging.INFO,
-    #     format="%(asctime)s - %(name)s - %(level)s - %(message)s",
-    #     datefmt="%m/%d/%Y %H:%M:%S",
-    #     filename="tests/assignment1.log",
-    #     filemode="a",
-    # )
-
-    # Command-line argument parser
-    parser = argparse.ArgumentParser(description="Censor text files.")
+    parser = argparse.ArgumentParser(description="Redact sensitive information from text files.")
     parser.add_argument("--input", help="Input file pattern", required=False, default="text_files/*.txt")
-    parser.add_argument("--names", action="store_true", help="Censor names")
-    parser.add_argument("--dates", action="store_true", help="Censor dates")
-    parser.add_argument("--phones", action="store_true", help="Censor phone numbers")
-    parser.add_argument("--address", action="store_true", help="Censor addresses")
-    parser.add_argument("--concept", nargs="*", help="Concept terms to censor")
+    parser.add_argument("--names", action="store_true", help="Redact names")
+    parser.add_argument("--dates", action="store_true", help="Redact dates")
+    parser.add_argument("--phones", action="store_true", help="Redact phone numbers")
+    parser.add_argument("--address", action="store_true", help="Redact addresses")
+    parser.add_argument("--concept", nargs="*", help="Topics to redact")
     parser.add_argument("--output", help="Output directory", required=False, default="files/")
-    parser.add_argument("--stats", default="stdout", help="Statistics output destination")
+    parser.add_argument("--stats", default="stdout", help="Output for statistics")
 
     args = parser.parse_args()
 
-    logging.info("Starting main")
     main(args)
-    logging.info("Main ended")

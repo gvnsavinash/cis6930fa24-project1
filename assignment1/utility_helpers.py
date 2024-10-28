@@ -1,113 +1,32 @@
 import os
 import re
 
-def merge_overlapping_substrings(entity_list):
-    """
-    Merges overlapping or consecutive substrings in the entity list.
-    
-    Args:
-        entity_list (list): A list of strings representing entities to be merged if they overlap.
-    
-    Returns:
-        list: A list of merged entities.
-    """
-    if not entity_list:
-        return []
-
-    # Sort entities by their length in reverse order
-    sorted_entities = sorted(entity_list, key=len, reverse=True)
-
-    merged_entities = []
-    for entity in sorted_entities:
-        if not merged_entities:
-            merged_entities.append(entity)
-        else:
-            overlap_found = False
-            for i, merged_entity in enumerate(merged_entities):
-                if entity in merged_entity or merged_entity in entity:
-                    overlap_found = True
-                    merged_entities[i] = entity if len(entity) > len(merged_entity) else merged_entity
-                    break
-
-            if not overlap_found:
-                merged_entities.append(entity)
-
-    return merged_entities
-
-
-def redact(text, entities, redact_names=False, redact_dates=False, redact_phones=False, redact_address=False, redact_concepts=[]):
-    """
-    Redact the text based on the entities and the specified flags for redaction.
-
-    Args:
-        text (str): The text to redact.
-        entities (dict): A dictionary containing entity types and their extracted values.
-        redact_names (bool): If True, redact names.
-        redact_dates (bool): If True, redact dates.
-        redact_phones (bool): If True, redact phone numbers.
-        redact_address (bool): If True, redact addresses.
-        redact_concepts (list): List of concept-related terms to redact.
-
-    Returns:
-        str: The redacted text.
-    """
+def apply_redaction(text, entities, redact_names=False, redact_dates=False, redact_phones=False, redact_address=False, redact_topics=[]):
     redacted_text = text
+    redact_settings = {
+        "PERSON": redact_names,
+        "DATE": redact_dates,
+        "PHONE": redact_phones,
+        "ADDRESS": redact_address,
+    }
 
-    if redact_names and 'PERSON' in entities:
-        for name in entities['PERSON']:
-            # Handle tuples by joining non-empty parts, otherwise treat as a direct string
-            if isinstance(name, tuple):
-                name = ''.join(part for part in name if part)
-            if name:
-                redacted_text = redacted_text.replace(name, '█' * len(name))
+    for entity_type, should_redact in redact_settings.items():
+        if should_redact and entity_type in entities:
+            for item in entities[entity_type]:
+                if item:
+                    redacted_text = redacted_text.replace(item, '█' * len(item))
 
-    if redact_dates and 'DATE' in entities:
-        for date in entities['DATE']:
-            # Handle tuples by joining non-empty parts
-            if isinstance(date, tuple):
-                date = ''.join(part for part in date if part)
-            if date:
-                redacted_text = redacted_text.replace(date, '█' * len(date))
-
-    if redact_phones and 'PHONE' in entities:
-        for phone in entities['PHONE']:
-            redacted_text = redacted_text.replace(phone, '█' * len(phone))
-
-    if redact_address and 'ADDRESS' in entities:
-        for address in entities['ADDRESS']:
-            redacted_text = redacted_text.replace(address, '█' * len(address))
-
-    # Redact based on concepts
-    if redact_concepts:
-        redacted_text = censor_concept_terms(redacted_text, redact_concepts)
+    if redact_topics:
+        redacted_text = hide_terms_in_sentences(redacted_text, redact_topics)
 
     return redacted_text
 
-def get_files_in_folder(folder_pattern):
-    """
-    Retrieves the list of files in the folder based on the input pattern (e.g., '*.txt').
 
-    Args:
-        folder_pattern (str): The glob pattern for file selection.
-    
-    Returns:
-        list: A list of file paths matching the input pattern.
-    """
+def list_files(folder_pattern):
     import glob
-    files = glob.glob(folder_pattern)
-    return files
+    return glob.glob(folder_pattern)
 
-
-def find_concept_synonyms(concept):
-    """
-    Finds synonyms for the given concept using WordNet.
-
-    Args:
-        concept (str): The concept word to find synonyms for.
-
-    Returns:
-        list: A list of synonyms for the concept.
-    """
+def get_related_words(concept):
     from nltk.corpus import wordnet
     synonyms = []
     for syn in wordnet.synsets(concept):
@@ -115,73 +34,15 @@ def find_concept_synonyms(concept):
             synonyms.append(lemma.name().replace('_', ' '))
     return list(set(synonyms))
 
-
-def censor_concept_terms1(text, related_terms):
-    """
-    Censor any word in the text that matches any of the related concept terms.
-
-    Args:
-        text (str): The original input text.
-        related_terms (list): The list of concept-related terms to censor.
-
-    Returns:
-        str: The redacted text with concept-related words censored.
-    """
-    words = text.split()  # Split text into individual words
-
-    # Iterate through each word and replace with a redacted version if it's in the related_terms
-    redacted_words = []
-    for word in words:
-        # Check case-insensitive match with any term in the related_terms list
-        if any(term.lower() == re.sub(r'[^\w\s]', '', word.lower()) for term in related_terms):
-            redacted_words.append('█' * len(word))  # Redact the word with punctuation
-            print(f"Redacting: {word}")
-        else:
-            redacted_words.append(word)  # Keep the word
-
-    # Rebuild the redacted text from the redacted words
-    print(f"Redacted text finialsed : {' '.join(redacted_words)}")
-    return ' '.join(redacted_words)
-
-
-
-
-
-import re
-
-def censor_concept_terms(text, related_terms):
-    """
-    Censor any sentence in the text that contains any of the related concept terms.
-
-    Args:
-        text (str): The original input text.
-        related_terms (list): The list of concept-related terms to censor.
-
-    Returns:
-        str: The redacted text with sentences containing concept-related words censored.
-    """
-    # Split the text into sentences using regular expressions to handle punctuation
-    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)  # Split at punctuation
-
+def hide_terms_in_sentences(text, related_words):
+    pattern = r'\b(?:' + '|'.join(re.escape(word) for word in related_words) + r')\b'
+    sentences = re.split(r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\?)\s', text)
     redacted_sentences = []
-    
-    # print(f"Original text: {text}")
-    # print(f"Sentences identified: {len(sentences)}\n")
-    
-    for i, sentence in enumerate(sentences):
-        #print(f"Processing sentence {i + 1}: {sentence}")
-        
-        # Check if any concept-related term is in the sentence (case-insensitive), allow trailing punctuation
-        if any(re.search(rf'\b{re.escape(term)}[.,;!?]?\b', sentence, re.IGNORECASE) for term in related_terms):
-            # Redact entire sentence if a term is found
-            redacted_sentence = '█' * len(sentence)  # Full redaction of the sentence including spaces
-            redacted_sentences.append(redacted_sentence)
-            #print(f"Redacting sentence {i + 1}: {sentence}\n")
-        else:
-            redacted_sentences.append(sentence)  # Keep sentence unchanged if no concept is found
-            #print(f"Keeping sentence {i + 1}: {sentence}\n")
 
-    # Join the redacted sentences back into the full text
-    redacted_text = ' '.join(redacted_sentences)
-    #print(f"\nRedacted text finalized: {redacted_text}")
-    return redacted_text
+    for sentence in sentences:
+        if re.search(pattern, sentence, re.IGNORECASE):
+            redacted_sentences.append('█' * len(sentence))
+        else:
+            redacted_sentences.append(sentence)
+
+    return ' '.join(redacted_sentences)
