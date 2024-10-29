@@ -13,6 +13,8 @@ import logging
 
 # Setting up logging
 logging.basicConfig(filename='docs/codelogger.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+import nltk
+nltk.download('wordnet')
 
 nlp = spacy.load("en_core_web_md")
 
@@ -159,8 +161,7 @@ def main(args):
     if not os.path.exists(args.output):
         os.mkdir(args.output)
 
-    import nltk
-    nltk.download('wordnet')
+
 
     for i, file_path in enumerate(files_to_process, start=1):
         with open(file_path, "r", encoding="utf-8") as f:
