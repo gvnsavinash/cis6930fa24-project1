@@ -1,4 +1,4 @@
-File: ran.txt
+File: LICENSE.txt
 Entity type : Number of occurrences
 
 PHONE : 0
