@@ -61,7 +61,13 @@ To achieve these objectives, the project leverages:
 
 ---
 
+https://github.com/user-attachments/assets/e64bc5da-4575-4b8f-98f8-65ca586322c2
+
+
+
 ### How to run
+
+
 
 Run the project with customizable redaction settings using command-line flags:
 
@@ -81,6 +87,9 @@ pipenv run python redactor.py --input '*.txt' --names --dates --phones --address
 - `--concept`: Custom term for censoring related sentences.
 - `--output`: Directory for saving censored files.
 - `--stats`: Specifies where to output redaction statistics (`stderr`, `stdout`, or a file path).
+
+**For Running Test File** 
+ -  pipenv run python -m pytest
 
 ---
 
