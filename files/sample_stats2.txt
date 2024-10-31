@@ -1,5 +1,0 @@
-File: sample.txt
-Entity type : Number of occurrences
-
-PHONE : 1
-

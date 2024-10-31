@@ -1,5 +1,8 @@
-File: LICENSE.txt
+File: sample.txt
 Entity type : Number of occurrences
 
-PHONE : 0
+PERSON : 5
+DATE : 3
+PHONE : 4
+ADDRESS : 11
 
