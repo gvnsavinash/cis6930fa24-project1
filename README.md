@@ -61,7 +61,6 @@ To achieve these objectives, the project leverages:
 
 ---
 
-https://github.com/user-attachments/assets/e64bc5da-4575-4b8f-98f8-65ca586322c2
 
 
 
