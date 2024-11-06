@@ -1,0 +1,308 @@
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+Concept redacted_words_count  : 3
+Concept redacted_sentences_count  : 3
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': [], 'Set_Concept_Words': {'see', 'style'}}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 2
+PHONE : 3
+ADDRESS : 11
+Concept redacted_words_count  : 11
+Concept redacted_sentences_count  : 7
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Sophia', 'Broadway St', 'Michael', 'Alice', 'Liam'], 'Dates': ['4/9/2025', '22/2/22'], 'Phones': ['+1 (305) 555-1234', '9876543210', '+1 (420) 794-0958'], 'Addresses': ['London', 'Maple St', '50 Broadway St', 'Sophia', 'WA', 'NY', 'Cedar St', 'Seattle', 'New York', '123 Maple St', '987 Cedar St'], 'Set_Concept_Words': {'phone', 'meet', 'Call'}}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+Concept redacted_words_count  : 3
+Concept redacted_sentences_count  : 3
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': [], 'Set_Concept_Words': {'see', 'style'}}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 2
+PHONE : 3
+ADDRESS : 11
+Concept redacted_words_count  : 11
+Concept redacted_sentences_count  : 7
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Liam', 'Alice', 'Michael', 'Sophia', 'Broadway St'], 'Dates': ['22/2/22', '4/9/2025'], 'Phones': ['+1 (305) 555-1234', '+1 (420) 794-0958', '9876543210'], 'Addresses': ['Seattle', '50 Broadway St', 'Cedar St', 'New York', 'WA', 'Sophia', 'Maple St', '123 Maple St', 'London', 'NY', '987 Cedar St'], 'Set_Concept_Words': {'phone', 'meet', 'Call'}}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+Concept redacted_words_count  : 3
+Concept redacted_sentences_count  : 3
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': [], 'Set_Concept_Words': {'style', 'see'}}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 2
+PHONE : 3
+ADDRESS : 11
+Concept redacted_words_count  : 11
+Concept redacted_sentences_count  : 7
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Alice', 'Michael', 'Broadway St', 'Liam', 'Sophia'], 'Dates': ['22/2/22', '4/9/2025'], 'Phones': ['+1 (305) 555-1234', '9876543210', '+1 (420) 794-0958'], 'Addresses': ['New York', 'NY', '50 Broadway St', '123 Maple St', 'London', 'Maple St', 'Seattle', 'Cedar St', 'Sophia', 'WA', '987 Cedar St'], 'Set_Concept_Words': {'phone', 'meet', 'Call'}}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+Concept redacted_words_count  : 3
+Concept redacted_sentences_count  : 3
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': [], 'Set_Concept_Words': {'style', 'see'}}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 2
+PHONE : 3
+ADDRESS : 11
+Concept redacted_words_count  : 11
+Concept redacted_sentences_count  : 7
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Alice', 'Liam', 'Sophia', 'Michael', 'Broadway St'], 'Dates': ['22/2/22', '4/9/2025'], 'Phones': ['9876543210', '+1 (420) 794-0958', '+1 (305) 555-1234'], 'Addresses': ['Seattle', 'NY', '123 Maple St', 'Cedar St', 'Sophia', 'Maple St', 'WA', '50 Broadway St', 'New York', 'London', '987 Cedar St'], 'Set_Concept_Words': {'meet', 'Call', 'see', 'phone'}}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PHONE : 0
+
+
+Detailed information on identified entities in the file:
+{'Phones': []}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PHONE : 1
+
+
+Detailed information on identified entities in the file:
+{'Phones': ['800-332-7979']}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack']}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 6
+
+
+Detailed information on identified entities in the file:
+{'Names': ['team.assistant', 'marketing.lead', 'Emily', 'Sarah', 'Thu', 'James']}
+
+File: random.txt
+Entity type : Number of occurrences
+
+DATE : 0
+
+
+Detailed information on identified entities in the file:
+{'Dates': []}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+DATE : 2
+
+
+Detailed information on identified entities in the file:
+{'Dates': ['Wed, 18 Apr 2001', '04/18/2001']}
+
+File: random.txt
+Entity type : Number of occurrences
+
+ADDRESS : 0
+
+
+Detailed information on identified entities in the file:
+{'Addresses': []}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+ADDRESS : 3
+
+
+Detailed information on identified entities in the file:
+{'Addresses': ['123 Main Street', 'AM', '2711 Clark Butler Blvd']}
+
+File: random.txt
+Entity type : Number of occurrences
+
+Concept redacted_words_count  : 2
+Concept redacted_sentences_count  : 2
+
+
+Detailed information on identified entities in the file:
+{'Set_Concept_Words': {'eat'}}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+Concept redacted_words_count  : 3
+Concept redacted_sentences_count  : 3
+
+
+Detailed information on identified entities in the file:
+{'Set_Concept_Words': {'lunch'}}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+Concept redacted_words_count  : 3
+Concept redacted_sentences_count  : 3
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': [], 'Set_Concept_Words': {'see', 'style'}}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 2
+PHONE : 3
+ADDRESS : 11
+Concept redacted_words_count  : 11
+Concept redacted_sentences_count  : 7
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Broadway St', 'Alice', 'Sophia', 'Liam', 'Michael'], 'Dates': ['4/9/2025', '22/2/22'], 'Phones': ['9876543210', '+1 (420) 794-0958', '+1 (305) 555-1234'], 'Addresses': ['123 Maple St', 'London', '987 Cedar St', 'Sophia', 'NY', 'Maple St', '50 Broadway St', 'Seattle', 'WA', 'Cedar St', 'New York'], 'Set_Concept_Words': {'phone', 'see', 'Call', 'meet'}}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': []}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 2
+PHONE : 3
+ADDRESS : 11
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Broadway St', 'Michael', 'Alice', 'Liam', 'Sophia'], 'Dates': ['22/2/22', '4/9/2025'], 'Phones': ['+1 (420) 794-0958', '9876543210', '+1 (305) 555-1234'], 'Addresses': ['Maple St', 'London', 'NY', '123 Maple St', '50 Broadway St', 'Seattle', 'New York', 'Cedar St', 'Sophia', '987 Cedar St', 'WA']}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': []}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 3
+PHONE : 4
+ADDRESS : 11
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Liam', 'Broadway St', 'Sophia', 'Michael', 'Alice'], 'Dates': ['22/2/22', '4/9/2025', '09/04/2025'], 'Phones': ['415-867-5309', '+1 (305) 555-1234', '+1 (420) 794-0958', '9876543210'], 'Addresses': ['Cedar St', '50 Broadway St', 'London', 'WA', 'New York', 'NY', 'Maple St', 'Sophia', 'Seattle', '987 Cedar St', '123 Maple St']}
+
+File: random.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+Concept redacted_words_count  : 3
+Concept redacted_sentences_count  : 3
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Jack'], 'Dates': [], 'Phones': [], 'Addresses': [], 'Set_Concept_Words': {'style', 'see'}}
+
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 3
+PHONE : 4
+ADDRESS : 11
+Concept redacted_words_count  : 11
+Concept redacted_sentences_count  : 7
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Michael', 'Liam', 'Broadway St', 'Alice', 'Sophia'], 'Dates': ['09/04/2025', '22/2/22', '4/9/2025'], 'Phones': ['+1 (420) 794-0958', '+1 (305) 555-1234', '415-867-5309', '9876543210'], 'Addresses': ['Sophia', 'Seattle', '987 Cedar St', 'Maple St', '123 Maple St', 'New York', 'London', 'Cedar St', 'WA', '50 Broadway St', 'NY'], 'Set_Concept_Words': {'phone', 'meet', 'Call', 'see'}}
+

@@ -184,7 +184,7 @@ This system relies on predefined regex patterns to accurately identify each enti
 
 #### 2. **Helper Functions for Redaction (`helper.py`)**
 
-This module includes several helper functions to perform redaction and manage file operations. It also includes internal functions for retrieving related terms and censoring sentences based on a list of keywords.
+This module includes several helper functions to perform redaction and manage file operations. It also includes internal functions for retrieving related terms and censoring sentences based on a list of keywords. Here i used RedactorClass where it consists of global variables which it helps for other functions to track and count the values , details of all functions (hide_terms_in_sentences , apply_redaction ) inside of class as follows : 
 
 **`apply_redaction(text, entities, redact_names=False, redact_dates=False, redact_phones=False, redact_address=False, redact_topics=[])`**
 - **Purpose**:  
@@ -209,6 +209,17 @@ This module includes several helper functions to perform redaction and manage fi
   apply_redaction("Contact Emily at 555-456-7890.", {"PERSON": ["Emily"], "PHONE": ["555-456-7890"]}, redact_names=True, redact_phones=True)
   ```
 
+**`hide_terms_in_sentences(text, related_words)`**
+- **Purpose**:  
+   This function redacts entire sentences containing any word in the `related_words` list. It first splits the text into sentences, then checks each sentence for matches. If a match is found, the sentence is replaced with a redacted block. This function is particularly useful for concept-based redaction, where specific words in a sentence warrant full censorship.
+
+- **Arguments**:
+  - `text` (str): Input text.
+  - `related_words` (list): List of words to search for within sentences.
+
+- **Returns**:
+  - `str`: Text with redacted sentences.
+
 **`list_files(folder_pattern)`**
 - **Purpose**:  
    Lists files in the directory that match a specified pattern (e.g., “*.txt”). This is useful for batch processing of files, allowing the tool to process single/multiple files in one run. The function uses the glob module, making it compatible with Unix-style wildcards for flexible file selection.
@@ -232,16 +243,7 @@ This module includes several helper functions to perform redaction and manage fi
 - **Internal Mechanics**:
   - `get_related_words` uses the `wordnet` module to find synonyms, hypernyms, and hyponyms. Each term is processed to remove WordNet suffixes (e.g., “.n.01”), ensuring the terms appear in a natural language format.
 
-**`hide_terms_in_sentences(text, related_words)`**
-- **Purpose**:  
-   This function redacts entire sentences containing any word in the `related_words` list. It first splits the text into sentences, then checks each sentence for matches. If a match is found, the sentence is replaced with a redacted block. This function is particularly useful for concept-based redaction, where specific words in a sentence warrant full censorship.
 
-- **Arguments**:
-  - `text` (str): Input text.
-  - `related_words` (list): List of words to search for within sentences.
-
-- **Returns**:
-  - `str`: Text with redacted sentences.
 
 #### 3. **Main Redaction Functionality (`redactor.py`)**
 
@@ -269,12 +271,14 @@ The main script combines all helper functions, regex, and NLP
 
 **`format_entity_stats(file, args, names, dates, phones, addresses)`**
 - **Purpose**:  
-   Formats statistics on redacted entities for output. The function constructs a summary of all redacted entities (e.g., names, dates, phones) for each processed file. The purpose is to provide a concise report of what was redacted in each file, supporting data governance and tracking.
+   Formats statistics on redacted entities for output. The function constructs a summary of all redacted entities (e.g., names, dates, phones etc ) for each processed file. The purpose is to provide a concise report of what was redacted in each file, supporting data governance and tracking.
 
 - **Arguments**:
   - `file` (str): The name of the processed file.
   - `args` (Namespace): Command-line arguments controlling which entities to include.
   - `names`, `dates`, `phones`, `addresses` (list): Lists of entities found.
+  - redacted_words_count (int): The count of redacted words.
+  - redacted_sentences_count (int): The count of redacted sentences.
 
 - **Returns**:
   - `str`: Formatted string with redaction statistics.
@@ -289,6 +293,9 @@ The stats structure will be outputted in the following format after running the 
                 Dates: 0, 
                 Phones: 0, 
                 Addresses: 0, 
+                Concept redacted_words_count : 0,
+                Concept redacted_sentences_count : 0
+  {'Names': [], 'Dates': [], 'Phones': [], 'Addresses': [], 'Set_Concept_Words': {}}
 
 *Sample Output:*
 
@@ -297,6 +304,12 @@ The stats structure will be outputted in the following format after running the 
                 Dates: 1, 
                 Phones: 1, 
                 Addresses: 2, 
+                Concept redacted_words_count : 4,
+                Concept redacted_sentences_count : 4
+
+  Detailed information on identified entities in the file:
+{'Names': ['Alice', 'Sophia'], 'Dates': ['4/9/2025', '22/2/22'], 'Phones': ['+1 (305) 555-1234', '+1 (420) 794-0958'], 'Addresses': ['123 Maple St', 'Maple St', '987 Cedar St'], 'Set_Concept_Words': {'phone', 'see', 'Call', 'meet'}}
+
 
 **`redact_sensitive_info(text_input, args, topics=None)`**
 - **Purpose**:  
@@ -318,6 +331,17 @@ The stats structure will be outputted in the following format after running the 
   - `args` (Namespace): Command-line arguments controlling input, output, and redaction options.
 
 ---
+
+**Stats file** 
+
+This script offers three modes for outputting statistics and detailed information about the redacted entities:
+
+**Standard Error (stderr):** Directs the output to the standard error stream, useful for error logging and diagnostics.
+**Standard Output (stdout):** Directs the output to the standard output stream, ideal for real-time monitoring in a console.
+**File Output:** Directs the output to a specified file, creating the file if it does not exist, and appending to it if it does.
+
+**Handling Multiple Files**
+When processing multiple files, the script appends the statistics and details for each input file into the designated one output file specified by the user for stats. This allows for consolidated logging of all processed information in one place, making it easier to review and analyze data across multiple documents.
 
 
 ## Test File
@@ -344,15 +368,6 @@ None; the function internally defines the test text, entities to redact, and fla
 Assertions:
 Verifies that the output contains the redaction character (█) where "Avinash" (name) and "Florida" (address) are expected to be redacted.
 
-**test_list_files()**
-
-Purpose:
-The test_list_files function verifies that list_files correctly identifies files based on a specified pattern. This test uses a pattern of "*.py" to ensure the function retrieves a list of Python files, confirming that it can accurately filter and list files in a directory according to the specified pattern.
-Arguments:
-None; the function internally sets the pattern and expected file extensions.
-Assertions:
-Asserts that the returned value is a list.
-Confirms that each item in the list ends with the .py extension, indicating that the file matching is accurate.
 
 **test_get_related_words()**
 

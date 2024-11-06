@@ -66,9 +66,11 @@ def print_debug_info(stage, names=None, dates=None, phones=None, addresses=None)
     if addresses is not None:
         print(f"Addresses: {addresses}")
         logging.debug(f"Addresses: {addresses}")
+    
 
 # Function to format and log statistics about the redaction process.
-def format_entity_stats(file, args, names, dates, phones, addresses):
+def format_entity_stats(file, args, names, dates, phones, addresses,redacted_words_count,redacted_sentences_count):
+       
     """
     Formats and returns a string containing statistics about different types of entities found in a file.
 
@@ -79,6 +81,8 @@ def format_entity_stats(file, args, names, dates, phones, addresses):
         dates (list): A list of detected dates (DATE entities).
         phones (list): A list of detected phone numbers (PHONE entities).
         addresses (list): A list of detected addresses (ADDRESS entities).
+        redacted_words_count (int): The count of redacted words.
+        redacted_sentences_count (int): The count of redacted sentences.
 
     Returns:
         str: A formatted string with the file name and the number of occurrences for each specified entity type.
@@ -93,12 +97,17 @@ def format_entity_stats(file, args, names, dates, phones, addresses):
         stats_output += f"PHONE : {len(phones)}\n"
     if args.address:
         stats_output += f"ADDRESS : {len(addresses)}\n"
+    if args.concept:
+        stats_output += f"Concept redacted_words_count  : {redacted_words_count}\n"
+        stats_output += f"Concept redacted_sentences_count  : {redacted_sentences_count}\n"
     
     stats_output += "\n"
     return stats_output
 
 # Main function to redact sensitive information based on specified arguments.
 def redact_sensitive_info(text_input, args, topics=None):
+    
+    
     """
     Redacts sensitive information from the given text input based on specified arguments.
     Parameters:
@@ -116,6 +125,13 @@ def redact_sensitive_info(text_input, args, topics=None):
     6. Combines results from regex and SpaCy extractions.
     7. Optionally processes topics for redaction.
     8. Applies redaction to each line in the text based on the specified arguments.
+    9. Counts the number of redacted sentences and words.
+    10. Returns the redacted text, found entities, and redaction counts.
+
+    tuple: A tuple containing the redacted text, lists of found names, dates, phones, addresses, 
+           the count of redacted sentences, the count of redacted words, and the set of redacted words.
+
+    RedactorRedact class is used to redact sensitive information from text based on specified settings and entity lists.
     Debug information is printed at various stages to aid in tracing the extraction and redaction process.
     """
     # Open file if path exists or split input text into lines.
@@ -184,6 +200,8 @@ def redact_sensitive_info(text_input, args, topics=None):
         topics = list(flatten([get_related_words(topic) for topic in topics]))
 
     # Apply redaction to each line in the text.
+    redactor = RedactorRedact()
+
     redacted_text_lines = []
     for line in lines_in_text:
         if args.address:
@@ -192,7 +210,7 @@ def redact_sensitive_info(text_input, args, topics=None):
                 for address in pyap_addresses:
                     line = line.replace(address, '█' * len(address))
 
-        redacted_line = apply_redaction(
+        redacted_line = redactor.apply_redaction(
             line,
             {"PERSON": combined_names, "DATE": combined_dates, "PHONE": combined_phones, "ADDRESS": combined_addresses},
             redact_names=args.names,
@@ -202,8 +220,13 @@ def redact_sensitive_info(text_input, args, topics=None):
             redact_topics=topics
         )
         redacted_text_lines.append(redacted_line)
+    
+    redacted_sentences_count, redacted_words_count = redactor.give_me_count()
+    set_words= redactor.give_me_words()
+    #print("setwords",set_words)
+    return "\n".join(redacted_text_lines), combined_names, combined_dates, combined_phones, combined_addresses, redacted_sentences_count, redacted_words_count,set_words
 
-    return "\n".join(redacted_text_lines), combined_names, combined_dates, combined_phones, combined_addresses
+
 
 # Function to extract names based on titles from the text.
 def extract_titles_and_names(text):
@@ -233,6 +256,7 @@ def extract_titles_and_names(text):
 
 # Main function to process files and apply redactions.
 def main(args):
+    
     """
     Main function to process and redact sensitive information from files.
     Args:
@@ -249,10 +273,12 @@ def main(args):
             d. Logs the processing status.
             e. Generates and saves statistics about the redacted entities.
             f. Optionally prints statistics to stderr or stdout based on user preference.
+            g. Optionally logs statistics to a specified file.
     """
     warnings.filterwarnings("ignore")
-    files_to_process = list_files(args.input)
-
+    files_to_process,count = list_files(args.input)
+    
+    #print("Total files to process:",count)
     # Create output directory if it doesn't exist.
     if not os.path.exists(args.output):
         os.mkdir(args.output)
@@ -262,7 +288,7 @@ def main(args):
         with open(file_path, "r", encoding="utf-8") as f:
             original_text = f.read()
 
-        redacted_content, names, dates, phones, addresses = redact_sensitive_info(original_text, args, topics=args.concept)
+        redacted_content, names, dates, phones, addresses, redacted_sentences_count, redacted_words_count,set_words = redact_sensitive_info(original_text, args, topics=args.concept)
         file_name = os.path.basename(file_path)
 
         with open(os.path.join(args.output, file_name + ".censored"), "w", encoding="utf-8") as f:
@@ -270,26 +296,68 @@ def main(args):
 
         logging.info(f"File '{file_name}' processed and saved to '{args.output}'")
 
-        stats_file_path = os.path.join(args.output, f"sample_stats{i}.txt")
         
-        stats_output = format_entity_stats(file_name, args, names, dates, phones, addresses)
-        with open(stats_file_path, "w", encoding="utf-8") as stats_file:
-            stats_file.write(stats_output)
 
-        # if args.stats == "stderr":
-        #     sys.stderr.write("Printing stats to stderr\n")
-        #     sys.stderr.write(stats_output)
-        # elif args.stats == "stdout":
-        #     sys.stdout.write("Printing stats to stdout\n")
-        #     sys.stdout.write(stats_output)
+        detailed_info = {}
+        if args.names:
+            detailed_info['Names'] = names
+        if args.dates:
+            detailed_info['Dates'] = dates
+        if args.phones:
+            detailed_info['Phones'] = phones
+        if args.address:
+            detailed_info['Addresses'] = addresses
+        if args.concept:
+            detailed_info['Set_Concept_Words'] = set_words
+        
+        #print("fyghhhg", detailed_info)
 
+        # Output the statistics and detailed information based on user preference
+        if args.stats == "stderr":
+            sys.stderr.write(f"Printing stats to stderr for file: {file_path}\n")
+            format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses,redacted_words_count,redacted_sentences_count)
+            sys.stderr.write(format_string)
+            sys.stderr.write("\nDetailed information on identified entities in the file:\n")
+            sys.stderr.write(str(detailed_info) + "\n")
+        elif args.stats == "stdout":
+            sys.stdout.write(f"Printing stats to stdout for file: {file_path}\n")
+            format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses,redacted_words_count,redacted_sentences_count)
+            sys.stdout.write(format_string)
+            sys.stdout.write("\nDetailed information on identified entities in the file:\n")
+            sys.stdout.write(str(detailed_info) + "\n")
+        else:
+            log_file = args.stats if args.stats else os.path.join(args.output, "redaction_stats.txt")
+            #print(f"Writing stats to the file: {log_file}")
+            logging.info(f"Writing stats to the file: {log_file}")
+            temp_var=count
+            # print(" temp_var",temp_var)
+            # mode= "w" if temp_var == 1 else "a"
+            mode='a'
+            f = open(log_file, mode, encoding="utf-8")
+            try:
+                # temp_var= temp_var - 1
+                # print("track temp_var",temp_var)
+                format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses, redacted_words_count, redacted_sentences_count)
+                f.write(format_string)
+                f.write("\nDetailed information on identified entities in the file:\n")
+                f.write(str(detailed_info) + "\n")
+                f.write("\n")
+            finally:
+                # f.close()
+                temp_var= temp_var - 1
+                if temp_var == 1:
+                    f.close()
+                    #print("File closed")
+                    
+                
+            
 
         
 
 # Argument parsing and main function call.
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Redact sensitive information from text files.")
-    parser.add_argument("--input", help="Input file pattern", required=False, default="text_files/*.txt")
+    parser.add_argument("--input", help="Input file pattern", required=False, default="*.txt")
     parser.add_argument("--names", action="store_true", help="Redact names")
     parser.add_argument("--dates", action="store_true", help="Redact dates")
     parser.add_argument("--phones", action="store_true", help="Redact phone numbers")

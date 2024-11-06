@@ -2,47 +2,124 @@ import os
 import re
 import logging
 
+
 # Configure logger for helper.py
 logging.basicConfig(filename='docs/codelogger.log', level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Function to apply redactions to text based on specified settings and entity lists.
-def apply_redaction(text, entities, redact_names=False, redact_dates=False, redact_phones=False, redact_address=False, redact_topics=[] ):
-    """
-    Redacts specified types of sensitive information from the given text.
-    Parameters:
-    text (str): The input text to be redacted.
-    entities (dict): A dictionary where keys are entity types (e.g., "PERSON", "DATE") and values are lists of entities to be redacted.
-    redact_names (bool): If True, redact names (entities of type "PERSON"). Default is False.
-    redact_dates (bool): If True, redact dates (entities of type "DATE"). Default is False.
-    redact_phones (bool): If True, redact phone numbers (entities of type "PHONE"). Default is False.
-    redact_address (bool): If True, redact addresses (entities of type "ADDRESS"). Default is False.
-    redact_topics (list): A list of additional topics/terms to be redacted from the text.
-    Returns:
-    str: The redacted text with specified entities and topics replaced by a series of █ characters.
-    """
-    logging.debug("Applying redactions based on settings.")
-    redacted_text = text  
-    redact_settings = {
-        "PERSON": redact_names,
-        "DATE": redact_dates,
-        "PHONE": redact_phones,
-        "ADDRESS": redact_address,
-    }
-    #print(f"entites in redact {entities}")
-    # Iterate over each entity type and apply redaction if enabled.
-    for entity_type, should_redact in redact_settings.items():
-        if should_redact and entity_type in entities:
-            for item in entities[entity_type]:
-                # pattern = r'\b' + re.escape(item) + r'\b'
-                redacted_text = redacted_text.replace(item, '█' * len(item))
-                # redacted_text = re.sub(pattern, '█' * len(item), redacted_text, flags=re.IGNORECASE)
-                logging.debug(f"Redacted {entity_type}: {item}")
-    # Additional redaction for specified topics.
-    if redact_topics:
-        redacted_text = hide_terms_in_sentences(redacted_text, redact_topics)
-        logging.debug("Applied topic-based redactions.")
 
-    return redacted_text
+
+class RedactorRedact:
+    """ 
+    RedactorRedact is a class designed to redact sensitive information from text based on specified settings and entity lists.
+    Attributes:
+        redacted_sentences_count (int): Counter for the number of sentences redacted.
+        redacted_words_count (int): Counter for the number of words redacted.
+        set_words (list): List to store words that have been redacted.
+    Methods:
+        __init__():
+            Initializes the RedactorRedact class with default values for counters and lists.
+        apply_redaction(text, entities, redact_names=False, redact_dates=False, redact_phones=False, redact_address=False, redact_topics=[]):
+        hide_terms_in_sentences(text, related_words):
+        give_me_count():
+            Returns the count of redacted sentences and words.
+                tuple: A tuple containing the count of redacted sentences and words.
+        give_me_words():
+            Returns the set of words that have been redacted.
+                set: A set of words that have been redacted.
+    """
+    def __init__(self):
+
+        self.redacted_sentences_count = 0
+        self.redacted_words_count = 0
+        self.set_words=[]
+    # Function to apply redactions to text based on specified settings and entity lists.
+    def apply_redaction(self, text, entities, redact_names=False, redact_dates=False, redact_phones=False, redact_address=False, redact_topics=[] ):
+        """
+        Redacts specified types of sensitive information from the given text.
+        Parameters:
+        text (str): The input text to be redacted.
+        entities (dict): A dictionary where keys are entity types (e.g., "PERSON", "DATE") and values are lists of entities to be redacted.
+        redact_names (bool): If True, redact names (entities of type "PERSON"). Default is False.
+        redact_dates (bool): If True, redact dates (entities of type "DATE"). Default is False.
+        redact_phones (bool): If True, redact phone numbers (entities of type "PHONE"). Default is False.
+        redact_address (bool): If True, redact addresses (entities of type "ADDRESS"). Default is False.
+        redact_topics (list): A list of additional topics/terms to be redacted from the text.
+        Returns:
+        str: The redacted text with specified entities and topics replaced by a series of █ characters.
+        """
+        logging.debug("Applying redactions based on settings.")
+        redacted_text = text  
+        redact_settings = {
+            "PERSON": redact_names,
+            "DATE": redact_dates,
+            "PHONE": redact_phones,
+            "ADDRESS": redact_address,
+        }
+        #print(f"entites in redact {entities}")
+        # Iterate over each entity type and apply redaction if enabled.
+        for entity_type, should_redact in redact_settings.items():
+            if should_redact and entity_type in entities:
+                for item in entities[entity_type]:
+                    # pattern = r'\b' + re.escape(item) + r'\b'
+                    redacted_text = redacted_text.replace(item, '█' * len(item))
+                    # redacted_text = re.sub(pattern, '█' * len(item), redacted_text, flags=re.IGNORECASE)
+                    logging.debug(f"Redacted {entity_type}: {item}")
+        # Additional redaction for specified topics.
+        if redact_topics:
+            redacted_text = self.hide_terms_in_sentences(redacted_text, redact_topics)
+            # print(f"redacted text in apply redaction {redacted_text}")
+            logging.debug("Applied topic-based redactions.")
+
+        return redacted_text
+
+
+    # Function to redact entire sentences containing any of a list of terms.
+    def hide_terms_in_sentences(self, text, related_words):
+        """
+        Redacts sentences in the given text that contain any of the related words.
+        Args:
+            text (str): The input text containing multiple sentences.
+            related_words (list of str): A list of words to search for in the sentences.
+        Returns:
+            str: The text with sentences containing related words redacted.
+        The function splits the input text into sentences, checks each sentence for the presence of any word from the related_words list (which we will get from the get_related_words function),
+        and replaces the entire sentence with a redacted block if any related word is found. The redacted sentences are joined back into a single string.
+        """
+
+        sentences = re.split(r'\. ', text)
+        redacted_sentences = []
+        #print(f"related words n hide terms function {related_words, len(sentences)}")
+        for sentence in sentences:
+            words_found = [word for word in related_words if word.lower() in sentence.lower()]
+            should_redact = False
+            for word in related_words:
+                if word.lower() in sentence.lower():
+                    should_redact = True
+                    self.set_words.append(word)
+                    self.redacted_sentences_count += 1
+                    self.redacted_words_count += len(set(words_found))
+                    break
+            if should_redact:
+                redacted_sentences.append('█' * len(sentence))
+                # print(f"Redacted a sentence due to related word: {sentence}")
+
+                logging.debug(f"Redacted a sentence due to related word: {sentence}")
+            else:
+                
+                #print(f"Keeping a sentence: {word }, {sentence}")
+                redacted_sentences.append(sentence + '.')
+        final_text = ' '.join(redacted_sentences).rstrip('.')
+        if text.endswith('.'):
+            final_text += '.'
+        logging.debug(f"Final redacted text: {final_text}")
+        # print("redacts entences count", self.redacted_sentences_count)
+        # print("redacted words count", self.redacted_words_count)
+        return final_text
+    
+    def give_me_count(self):
+        return self.redacted_sentences_count, self.redacted_words_count
+    def give_me_words(self):
+        return set(self.set_words)
 
 # Function to list files in a directory based on a glob pattern.
 def list_files(folder_pattern):
@@ -61,8 +138,10 @@ def list_files(folder_pattern):
     """
     import glob
     files = glob.glob(folder_pattern)
+    #print(f"Listing files with pattern {folder_pattern}: {files}")
+    #print("length",len(files))
     logging.debug(f"Listing files with pattern {folder_pattern}: {files}")
-    return files
+    return files , len(files)
 
 # Function to retrieve related words for a given concept using WordNet.
 def get_related_words(concept):
@@ -96,37 +175,3 @@ def get_related_words(concept):
     #print(f"Related words for concept {concept}: {synonyms}")
     return list(set(synonyms))
 
-# Function to redact entire sentences containing any of a list of terms.
-def hide_terms_in_sentences(text, related_words):
-    """
-    Redacts sentences in the given text that contain any of the related words.
-    Args:
-        text (str): The input text containing multiple sentences.
-        related_words (list of str): A list of words to search for in the sentences.
-    Returns:
-        str: The text with sentences containing related words redacted.
-    The function splits the input text into sentences, checks each sentence for the presence of any word from the related_words list (which we will get from the get_related_words function),
-    and replaces the entire sentence with a redacted block if any related word is found. The redacted sentences are joined back into a single string.
-    """
-    sentences = re.split(r'\. ', text)
-    redacted_sentences = []
-    #print(f"related words n hide terms function {related_words, len(sentences)}")
-    for sentence in sentences:
-        should_redact = False
-        for word in related_words:
-            if word.lower() in sentence.lower():
-                should_redact = True
-                break
-        if should_redact:
-            redacted_sentences.append('█' * len(sentence))
-            # print(f"Redacted a sentence due to related word: {sentence}")
-            logging.debug(f"Redacted a sentence due to related word: {sentence}")
-        else:
-            
-            #print(f"Keeping a sentence: {word }, {sentence}")
-            redacted_sentences.append(sentence + '.')
-    final_text = ' '.join(redacted_sentences).rstrip('.')
-    if text.endswith('.'):
-        final_text += '.'
-    logging.debug(f"Final redacted text: {final_text}")
-    return final_text

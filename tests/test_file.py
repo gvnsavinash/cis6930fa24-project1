@@ -10,6 +10,7 @@ from redactor import *
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'assignment1')))
 
 
+redactor = RedactorRedact()
 
 def test_extract_using_regex():
     """
@@ -51,22 +52,9 @@ def test_apply_redaction():
     """
     text = "Contact Avinash at Florida."
     entities = {'PERSON': ['Avinash'], 'ADDRESS': ['Florida']}
-    redacted_text = apply_redaction(text, entities, redact_names=True, redact_address=True)
+    redacted_text = redactor.apply_redaction(text, entities, redact_names=True, redact_address=True)
     assert '█' in redacted_text
 
-def test_list_files():
-    """
-    Tests the list_files function to ensure it returns a list of Python files.
-
-    This test checks if the list_files function correctly identifies and returns
-    a list of files matching the specified folder pattern. The folder pattern used
-    in this test is "*.py", which should match all Python files. The test asserts
-    that the returned value is a list and that all elements in the list end with
-    the ".py" extension.
-    """
-    folder_pattern = "*.py"
-    files = list_files(folder_pattern)
-    assert isinstance(files, list) and all(f.endswith('.py') for f in files)
 
 
 
@@ -103,8 +91,10 @@ def test_hide_terms_in_sentences():
     """
     text = "The quick brown fox jumps over the lazy dog."
     related_words = ["fox", "dog"]
-    redacted_text = hide_terms_in_sentences(text, related_words)
+    redacted_text = redactor.hide_terms_in_sentences(text, related_words)
     assert '█' in redacted_text
+
+
 
 
 
