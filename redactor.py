@@ -350,7 +350,7 @@ def main(args):
             finally:
                 # f.close()
                 temp_var= temp_var - 1
-                if temp_var == 1:
+                if temp_var == 0:
                     f.close()
                     #print("File closed")
                     
