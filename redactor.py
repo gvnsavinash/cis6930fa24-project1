@@ -277,7 +277,12 @@ def main(args):
     """
     warnings.filterwarnings("ignore")
     files_to_process,count = list_files(args.input)
-    
+
+    # if args.stats != "stderr" and args.stats != "stdout":
+    #     log_file = args.stats if args.stats else os.path.join(args.output, "redaction_stats.txt")
+    #     with open(log_file, 'w'):
+    #         pass
+
     #print("Total files to process:",count)
     # Create output directory if it doesn't exist.
     if not os.path.exists(args.output):

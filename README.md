@@ -277,7 +277,7 @@ The main script combines all helper functions, regex, and NLP
   - `stage` (str): Current stage of processing.
   - `names`, `dates`, `phones`, `addresses` (list, optional): Lists of extracted entities for logging.
 
-**`format_entity_stats(file, args, names, dates, phones, addresses)`**
+**`format_entity_stats(file, args, names, dates, phones, addresses, redacted_words_count,redacted_sentences_count)`**
 - **Purpose**:  
    Formats statistics on redacted entities for output. The function constructs a summary of all redacted entities (e.g., names, dates, phones etc ) for each processed file. The purpose is to provide a concise report of what was redacted in each file, supporting data governance and tracking.
 
@@ -401,23 +401,23 @@ Checks that the output contains the redaction character (█) .
 ## Bugs and Assumptions
 
 1. Regex and NLP Limitations
-  1. Based on the project’s design, the entity extraction depends heavily on regex patterns and SpaCy’s NLP model. While these methods are effective for common formats, they might miss entities that don’t follow standard structures, particularly with names, addresses, and phone numbers.
-  2. The address regex pattern is built around specific assumptions like full street names and postal codes, so addresses missing these elements or with abbreviations may not be properly redacted.
-  3. The SpaCy model is optimized for English, so redaction may be less accurate for non-English texts.
+  - Based on the project’s design, the entity extraction depends heavily on regex patterns and SpaCy’s NLP model. While these methods are effective for common formats, they might miss entities that don’t follow standard structures, particularly with names, addresses, and phone numbers.
+  - The address regex pattern is built around specific assumptions like full street names and postal codes, so addresses missing these elements or with abbreviations may not be properly redacted.
+  - The SpaCy model is optimized for English, so redaction may be less accurate for non-English texts.
 
 2. File Format and Input Assumptions
-  1. This tool is most effective with well-structured text that adheres to standard rules for punctuation, spacing, and capitalization. If the input text has inconsistent or non-standard formatting, the redaction results might not be as accurate.
-  2. It’s designed to handle plain text files and doesn’t account for complex document formats like PDFs with embedded images or structured formats like HTML or JSON. This limits its effectiveness when handling highly formatted or data-rich text structures.
+  - This tool is most effective with well-structured text that adheres to standard rules for punctuation, spacing, and capitalization. If the input text has inconsistent or non-standard formatting, the redaction results might not be as accurate.
+  - It’s designed to handle plain text files and doesn’t account for complex document formats like PDFs with embedded images or structured formats like HTML or JSON. This limits its effectiveness when handling highly formatted or data-rich text structures.
 
 3. Dependency and Encoding Constraints
-  1. The project uses several external libraries (SpaCy, Pyap, NLTK), each with unique installation requirements. An initial internet connection is needed to download WordNet data for NLTK, which may affect usage in offline environments.
-  2. TF-8 encoding is assumed for all input files; files with different encodings, particularly those containing special characters, might not process correctly. Also, the use of Unix-style patterns for batch processing can create compatibility issues on some systems, particularly Windows.
+  - The project uses several external libraries (SpaCy, Pyap, NLTK), each with unique installation requirements. An initial internet connection is needed to download WordNet data for NLTK, which may affect usage in offline environments.
+  - TF-8 encoding is assumed for all input files; files with different encodings, particularly those containing special characters, might not process correctly. Also, the use of Unix-style patterns for batch processing can create compatibility issues on some systems, particularly Windows.
 
 4. I didn’t have the opportunity to use Snorkel’s LFApplier or LabelModel in this project. However, I utilized Snorkel’s labeling_function decorator to enhance my regex_match function. By applying this decorator, the function can now ABSTAIN when it doesn’t find relevant matches, instead of assigning a random label. This ensures higher accuracy by avoiding uncertain or arbitrary labels when the function lacks sufficient information.
 
 5. Security and Privacy Considerations
-  1. Since redacted files are stored in the output directory, any incomplete redaction could expose sensitive data. Therefore, it’s crucial to restrict access to this directory.
-  2. The tool assumes a text-based input structure, which means it may struggle with heavily formatted or nested data types like JSON or XML. This assumption could limit its utility when working with more complex data formats.
+  - Since redacted files are stored in the output directory, any incomplete redaction could expose sensitive data. Therefore, it’s crucial to restrict access to this directory.
+  - The tool assumes a text-based input structure, which means it may struggle with heavily formatted or nested data types like JSON or XML. This assumption could limit its utility when working with more complex data formats.
 
 6. I didn’t have the opportunity to use Snorkel’s LFApplier or LabelModel in this project. However, I utilized Snorkel’s labeling_function decorator to enhance my regex_match function. By applying this decorator, the function can now ABSTAIN when it doesn’t find relevant matches, instead of assigning a random label. This ensures higher accuracy by avoiding uncertain or arbitrary labels when the function lacks sufficient information.
 
