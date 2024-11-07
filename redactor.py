@@ -318,41 +318,41 @@ def main(args):
         #print("fyghhhg", detailed_info)
 
         # Output the statistics and detailed information based on user preference
-        if args.stats == "stderr":
-            sys.stderr.write(f"Printing stats to stderr for file: {file_path}\n")
-            format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses,redacted_words_count,redacted_sentences_count)
-            sys.stderr.write(format_string)
-            sys.stderr.write("\nDetailed information on identified entities in the file:\n")
-            sys.stderr.write(str(detailed_info) + "\n")
-        elif args.stats == "stdout":
-            sys.stdout.write(f"Printing stats to stdout for file: {file_path}\n")
-            format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses,redacted_words_count,redacted_sentences_count)
-            sys.stdout.write(format_string)
-            sys.stdout.write("\nDetailed information on identified entities in the file:\n")
-            sys.stdout.write(str(detailed_info) + "\n")
-        else:
-            log_file = args.stats if args.stats else os.path.join(args.output, "redaction_stats.txt")
-            #print(f"Writing stats to the file: {log_file}")
-            logging.info(f"Writing stats to the file: {log_file}")
-            temp_var=count
-            # print(" temp_var",temp_var)
-            # mode= "w" if temp_var == 1 else "a"
-            mode='a'
-            f = open(log_file, mode, encoding="utf-8")
-            try:
-                # temp_var= temp_var - 1
-                # print("track temp_var",temp_var)
-                format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses, redacted_words_count, redacted_sentences_count)
-                f.write(format_string)
-                f.write("\nDetailed information on identified entities in the file:\n")
-                f.write(str(detailed_info) + "\n")
-                f.write("\n")
-            finally:
-                # f.close()
-                temp_var= temp_var - 1
-                if temp_var == 0:
-                    f.close()
-                    #print("File closed")
+        # if args.stats == "stderr":
+        #     sys.stderr.write(f"Printing stats to stderr for file: {file_path}\n")
+        #     format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses,redacted_words_count,redacted_sentences_count)
+        #     sys.stderr.write(format_string)
+        #     sys.stderr.write("\nDetailed information on identified entities in the file:\n")
+        #     sys.stderr.write(str(detailed_info) + "\n")
+        # elif args.stats == "stdout":
+        #     sys.stdout.write(f"Printing stats to stdout for file: {file_path}\n")
+        #     format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses,redacted_words_count,redacted_sentences_count)
+        #     sys.stdout.write(format_string)
+        #     sys.stdout.write("\nDetailed information on identified entities in the file:\n")
+        #     sys.stdout.write(str(detailed_info) + "\n")
+        # else:
+        #     log_file = args.stats if args.stats else os.path.join(args.output, "redaction_stats.txt")
+        #     #print(f"Writing stats to the file: {log_file}")
+        #     logging.info(f"Writing stats to the file: {log_file}")
+        #     temp_var=count
+        #     # print(" temp_var",temp_var)
+        #     # mode= "w" if temp_var == 1 else "a"
+        #     mode='a'
+        #     f = open(log_file, mode, encoding="utf-8")
+        #     try:
+        #         # temp_var= temp_var - 1
+        #         # print("track temp_var",temp_var)
+        #         format_string = format_entity_stats(os.path.basename(file_path), args, names, dates, phones, addresses, redacted_words_count, redacted_sentences_count)
+        #         f.write(format_string)
+        #         f.write("\nDetailed information on identified entities in the file:\n")
+        #         f.write(str(detailed_info) + "\n")
+        #         f.write("\n")
+        #     finally:
+        #         # f.close()
+        #         temp_var= temp_var - 1
+        #         if temp_var == 0:
+        #             f.close()
+        #             #print("File closed")
                     
                 
             
