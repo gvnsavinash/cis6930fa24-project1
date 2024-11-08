@@ -17,7 +17,7 @@ import nltk
 nltk.download('wordnet')
 
 # Load the Spacy NLP model.
-nlp = spacy.load("en_core_web_md")
+
 
 # Function to find US addresses in text using the Pyap library.
 def find_addresses_with_pyap(text):
@@ -166,6 +166,7 @@ def redact_sensitive_info(text_input, args, topics=None):
 
     # Use Spacy NLP to extract names and addresses.
     spacy_names, spacy_dates, spacy_addresses = [], [], []
+    nlp = spacy.load("en_core_web_md")
     doc = nlp(full_text)
     for entity in doc.ents:
         if entity.label_ == 'GPE':
