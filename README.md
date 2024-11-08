@@ -68,6 +68,10 @@ To achieve these objectives, the project leverages:
 
 
 
+https://github.com/user-attachments/assets/8c0ad07c-d8e3-46d1-92e2-0982da85a5c0
+
+
+
 Run the project with customizable redaction settings using command-line flags:
 
 bash :
