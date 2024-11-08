@@ -1,0 +1,24 @@
+File: sample.txt
+Entity type : Number of occurrences
+
+PERSON : 5
+DATE : 3
+PHONE : 4
+ADDRESS : 11
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Alice', 'Sophia', 'Broadway St', 'Michael', 'Liam'], 'Dates': ['4/9/2025', '09/04/2025', '22/2/22'], 'Phones': ['415-867-5309', '+1 (420) 794-0958', '9876543210', '+1 (305) 555-1234'], 'Addresses': ['Cedar St', '123 Maple St', 'Maple St', 'London', 'NY', '50 Broadway St', 'Sophia', 'WA', '987 Cedar St', 'Seattle', 'New York']}
+
+File: simple.txt
+Entity type : Number of occurrences
+
+PERSON : 1
+DATE : 0
+PHONE : 0
+ADDRESS : 0
+
+
+Detailed information on identified entities in the file:
+{'Names': ['Harry'], 'Dates': [], 'Phones': [], 'Addresses': []}
+
